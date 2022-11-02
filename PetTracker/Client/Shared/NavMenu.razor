@@ -1,0 +1,49 @@
+﻿<div class="top-row navbar navbar-dark pt-0">
+	<div class="container-fluid pt-0 pl-0">
+		<a class="navbar-brand pt-0" href="/"><img src="images/pettracker_logo.png" title="PetTracker" class="logo-responsive rounded" /></a>
+		<button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+	</div>
+</div>
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+	<nav class="flex-column">
+		<div class="nav-item px-3">
+			<NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+				<span class="oi oi-home" aria-hidden="true"></span> Naslovnica
+			</NavLink>
+			<AuthorizeView Roles="User">
+				<NavLink class="nav-link" href="/pets" Match="NavLinkMatch.All">
+					<span class="oi fa-solid fa-paw" aria-hidden="true"></span> Moji ljubimci
+				</NavLink>
+			</AuthorizeView>
+			<AuthorizeView Roles="User">
+				<NavLink class="nav-link" href="/vet-clinics" Match="NavLinkMatch.All">
+					<span class="oi fa-solid fa-house-chimney-medical" aria-hidden="true"></span> Veterinske stanice
+				</NavLink>
+			</AuthorizeView>
+			<AuthorizeView Roles="User">
+				<NavLink class="nav-link" href="/pet-statistics" Match="NavLinkMatch.All">
+					<span class="oi fas fa-chart-bar" aria-hidden="true"></span> Statistika
+				</NavLink>
+			</AuthorizeView>
+			<AuthorizeView Roles="Administrator">
+				<NavLink class="nav-link" href="/admin-panel" Match="NavLinkMatch.All">
+					<span class="oi fa-solid fa-user-gear" aria-hidden="true"></span> Administracija
+				</NavLink>
+			</AuthorizeView>
+		</div>
+	</nav>
+</div>
+
+@code {
+	private bool collapseNavMenu = true;
+
+	private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+	private void ToggleNavMenu()
+	{
+		collapseNavMenu = !collapseNavMenu;
+	}
+}

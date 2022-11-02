@@ -1,0 +1,29 @@
+﻿@using PetTracker.Client.Constants
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                <Authorizing>
+                    @((MarkupString)ServerMessagesConstants.LoadingDataCenter)
+                </Authorizing>
+                <NotAuthorized>
+                    @if (context.User.Identity?.IsAuthenticated != true)
+                    {
+                        <RedirectToLogin />
+                    }
+                    else
+                    {
+                        <p role="alert">Niste ovlašteni za pristup ovom resursu.</p>
+                    }
+                </NotAuthorized>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+            <PageTitle>Error 404</PageTitle>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <p role="alert">Ups, čini se da na ovoj adresi nema ništa.</p>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>

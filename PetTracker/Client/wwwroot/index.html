@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>PetTracker</title>
+    <base href="/" />
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="stylesheet" href="PetTracker.Client.styles.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <link rel="stylesheet" href="_content/Blazored.Toast/blazored-toast.min.css" />
+    <script src="https://kit.fontawesome.com/5fe9233007.js" crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <div id="app">
+        <div class="data-loading center-loading"><i class="fas fa-spinner fa-spin fa-7x"></i>
+        </div>
+    </div>
+
+    <div id="blazor-error-ui">
+        Ups, dogodila se neočekivana greška.
+        <a href="" class="reload">Ponovno učitaj</a>
+        <a class="dismiss">🗙</a>
+    </div>
+    <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>
+    <script src="_framework/blazor.webassembly.js"></script>
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=key&libraries=places"></script>
+    <script src="_content/BlazorGoogleMaps/js/objectManager.js"></script>
+</body>
+
+</html>

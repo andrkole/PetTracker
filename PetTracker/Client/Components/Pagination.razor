@@ -1,0 +1,15 @@
+﻿
+<nav aria-label="Page navigation" class="pagination is-centered is-rounded">
+    <ul class="pagination-list">
+        @if (pages is not null) 
+        {
+            @foreach (var page in pages)
+            {
+                <li @onclick="() => SelectCurrentPage(page)">
+                    <a class="pagination-link @(page.Active ? "is-current" : null)" disabled="@(!page.Enabled)">
+                        @(page.Text)</a>
+                </li>
+            }
+        }
+    </ul>
+</nav>

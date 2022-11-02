@@ -1,0 +1,29 @@
+﻿@page "/authentication/{action}"
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using PetTracker.Client.Constants
+<RemoteAuthenticatorView Action="@Action">
+    <LoggingIn>
+        @((MarkupString)ServerMessagesConstants.LoadingData)
+    </LoggingIn>
+    <CompletingLoggingIn>
+        @((MarkupString)ServerMessagesConstants.LoadingData)
+    </CompletingLoggingIn>
+    <LogInFailed>
+        @((MarkupString)ServerMessagesConstants.LoadingData)
+    </LogInFailed>
+    <CompletingLogOut>
+        @((MarkupString)ServerMessagesConstants.LoadingData)
+    </CompletingLogOut>
+    <LogOut>
+        @((MarkupString)ServerMessagesConstants.LoadingData)
+    </LogOut>
+    <LogOutSucceeded>
+        <div class="notification is-success has-text-centered has-text-weight-semibold">
+		    <span class="is-size-5">Uspješno ste odjavljeni.</span>
+	    </div>
+    </LogOutSucceeded>
+</RemoteAuthenticatorView>
+
+@code{
+    [Parameter] public string? Action { get; set; }
+}

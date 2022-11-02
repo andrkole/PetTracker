@@ -1,0 +1,502 @@
+﻿@page "/pets"
+@using Microsoft.AspNetCore.Authorization
+@using PetTracker.Client.Constants
+@using PetTracker.Shared.Enums
+@using PetTracker.Shared.Extensions
+@using PetTracker.Shared.Models
+@attribute [Authorize]
+
+<PageTitle>Moji ljubimci</PageTitle>
+
+<h1 class="title has-text-centered">Moji ljubimci</h1>
+
+<div class="modal is-clipped animate__animated animate__zoomIn animate__faster is-rounded @(IsModalActive is true ? "is-active" : "")">
+    <div class="modal-background"></div>
+    <div class="modal-content">
+        <EditForm Model="@Pet" class="box" OnValidSubmit="@HandleValidSubmit">
+            <DataAnnotationsValidator />
+
+            <div class="field is-horizontal ml-6">
+                <div class="field-label is-normal">
+                    <label class="label">Ime<span class="has-text-danger">*</span></label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow">
+                        <div class="control">
+                            <InputText @bind-Value="Pet.Name" class="input" placeholder="Ime ljubimca" />
+                            <ValidationMessage For="@(() => Pet.Name)"></ValidationMessage>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal ml-6">
+                <div class="field-label is-normal">
+                    <label class="label">Vrsta<span class="has-text-danger">*</span></label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow">
+                        <div class="control">
+                            <div class="select is-rounded is-hovered">
+                                <InputSelect @bind-Value="Pet.Kind">
+                                    <option value="" selected disabled hidden>--Odaberite--</option>
+                                    @foreach (var petKind in (PetKind[])Enum.GetValues(typeof(PetKind)))
+                                    {
+                                        <option value=@petKind>@petKind.GetDisplayName()</option>
+                                    }
+                                </InputSelect>
+                            </div>
+                            <ValidationMessage For="@(() => Pet.Kind)"></ValidationMessage>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (Pet.Kind is PetKind.Dog or PetKind.Cat)
+            {
+                <div class="field is-horizontal ml-6">
+                    <div class="field-label is-normal">
+                        <label class="label">Pasmina</label>
+                    </div>
+                    <div class="field-body">
+                        <div class="field is-narrow">
+                            <div class="control">
+                                <InputText @bind-Value="Pet.Breed" class="input" placeholder="Pasmina ljubimca" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <div class="field is-horizontal ml-6">
+                <div class="field-label is-normal">
+                    <label class="label">Starost</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow has-addons">
+                        <div></div>
+                        <div class="control">
+                            <InputNumber @bind-Value="Pet.Age" @bind-Value:format="F1" class="input" placeholder="Starost ljubimca" step="0.5" />
+                            <ValidationMessage For="@(() => Pet.Age)"></ValidationMessage>
+                        </div>
+                        <div class="control">
+                            <a class="button is-static">god.</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal ml-6">
+                <div class="field-label is-normal">
+                    <label class="label">Težina</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow has-addons">
+                        <div class="control">
+                            <InputNumber @bind-Value="Pet.Weight" @bind-Value:format="#.##" class="input" placeholder="Težina ljubimca" step="0.1" />
+                            <ValidationMessage For="@(() => Pet.Weight)"></ValidationMessage>
+                        </div>
+                        <div class="control">
+                            <a class="button is-static">kg</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal ml-6">
+                <div class="field-label">
+                    <label class="label">Kastriran</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow">
+                        <div class="control">
+                            <InputRadioGroup @bind-Value="Pet.Sterilized" Name="Sterilized">
+                                <label class="radio-label">
+                                    <InputRadio Value="true" Name="Sterilized" />
+                                    <span>Da</span>
+                                </label>
+                                <label class="radio-label">
+                                    <InputRadio Value="false" Name="Sterilized" />
+                                    <span>Ne</span>
+                                </label>
+                            </InputRadioGroup>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal ml-6">
+                <div class="field-label">
+                    <label class="label">Spol</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow">
+                        <div class="control">
+                            <InputRadioGroup @bind-Value="Pet.Gender" Name="Gender">
+                                <label class="radio-label">
+                                    <InputRadio Value="@PetGender.Male" Name="Gender" />
+                                    <span>@PetGender.Male.GetDisplayName()</span>
+                                </label>
+                                <label class="radio-label">
+                                    <InputRadio Value="@PetGender.Female" Name="Gender" />
+                                    <span>@PetGender.Female.GetDisplayName()</span>
+                                </label>
+                            </InputRadioGroup>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal ml-6">
+                <div class="field-label is-normal">
+                    <label class="label">GPS S/N<span class="has-text-danger">*</span></label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow has-addons">
+                        <div class="control has-icons-right">
+                            <InputText @bind-Value="Pet.GpsDevice.SerialNumber" class="input" placeholder="Serijski broj GPS-a" disabled="@(IsPetEdit || IsGpsSNValid is true)" />
+                            <ValidationMessage For="@(() => Pet.GpsDevice.SerialNumber)"></ValidationMessage>
+                            <span class="has-text-danger" hidden="@(IsGpsSNValid is null || IsGpsSNValid is true)">Serijski broj GPS-a nije ispravan.</span>
+                            <span class="@(IsGpsSNValid is true ? "icon is-right check-icon" : "is-hidden")">
+                                <i class="fa-solid fa-check"></i>
+                            </span>
+                        </div>
+                        <div class="control">
+                            <button type="button" class="button is-info has-text-weight-semibold" @onclick="ValidateGpsSN"
+                                    disabled="@(IsPetEdit || !context.IsModified() || Pet.GpsDevice?.SerialNumber?.Length != 8 || IsGpsSNValid is true)">
+                                Provjeri S/N
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal ml-6">
+                <div class="field-label is-normal">
+                    <label class="label">Senzor zraka S/N</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow has-addons">
+                        <div class="control has-icons-right">
+                            <InputText @bind-Value="Pet.AirInfoSensor.SerialNumber" class="input" placeholder="Serijski broj senzora zraka" disabled="@(IsPetEdit && Pet.AirInfoSensor.Id != Guid.Empty || IsAirSensorSNValid is true)" />
+                            <ValidationMessage For="@(() => Pet.AirInfoSensor.SerialNumber)"></ValidationMessage>
+                            <span class="has-text-danger" hidden="@(IsAirSensorSNValid is null || IsAirSensorSNValid is true)">Serijski broj senzora zraka nije ispravan.</span>
+                            <span class="@(IsAirSensorSNValid is true ? "icon is-right check-icon" : "is-hidden")">
+                                <i class="fa-solid fa-check"></i>
+                            </span>
+                        </div>
+                        <div class="control">
+                            <button type="button" class="button is-info has-text-weight-semibold" @onclick="ValidateAirSensorSN"
+                                    disabled="@(!context.IsModified() || Pet.AirInfoSensor.SerialNumber?.Length != 6 || Pet.AirInfoSensor.Id != Guid.Empty || IsAirSensorSNValid is true)">
+                                Provjeri S/N
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal ml-6">
+                <div class="field-label is-normal">
+                    <label class="label">Senzor plamena S/N</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow has-addons">
+                        <div class="control has-icons-right">
+                            <InputText @bind-Value="Pet.FlameDetectionSensor.SerialNumber" class="input" placeholder="Serijski broj senzora plamena" disabled="@(IsPetEdit && Pet.FlameDetectionSensor.Id != Guid.Empty || IsFlameDetectionSensorSNValid is true)" />
+                            <ValidationMessage For="@(() => Pet.FlameDetectionSensor.SerialNumber)"></ValidationMessage>
+                            <span class="has-text-danger" hidden="@(IsFlameDetectionSensorSNValid is null || IsFlameDetectionSensorSNValid is true)">Serijski broj senzora plamena nije ispravan.</span>
+                            <span class="@(IsFlameDetectionSensorSNValid is true ? "icon is-right check-icon" : "is-hidden")">
+                                <i class="fa-solid fa-check"></i>
+                            </span>
+                        </div>
+                        <div class="control">
+                            <button type="button" class="button is-info has-text-weight-semibold" @onclick="ValidateFlameDetectionSensorSn"
+                                    disabled="@(!context.IsModified() || Pet.FlameDetectionSensor.SerialNumber?.Length != 6 || Pet.FlameDetectionSensor.Id != Guid.Empty || IsFlameDetectionSensorSNValid is true)">
+                                Provjeri S/N
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal ml-6">
+                <div class="field-label">
+                    <label class="label">Prva lokacija kao centar za radius</label>
+                </div>
+                <div class="field-body is-align-items-center">
+                    <div class="field is-narrow">
+                        <div class="control">
+                            <InputRadioGroup @bind-Value="Pet.FirstLocationAsCenter" Name="FirstLocation">
+                                <label class="radio-label">
+                                    <InputRadio Value="true" Name="FirstLocation" />
+                                    <span>Da</span>
+                                </label>
+                                <label class="radio-label">
+                                    <InputRadio Value="false" Name="FirstLocation" />
+                                    <span>Ne</span>
+                                </label>
+                            </InputRadioGroup>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (Pet.FirstLocationAsCenter is false)
+            {
+                if (Pet.CenterLocation is null)
+                    Pet.CenterLocation = new PetLocationDto();
+
+                <div class="field is-horizontal ml-6">
+                    <div class="field-label is-normal">
+                        <label class="label">Dužina</label>
+                    </div>
+                    <div class="field-body">
+                        <div class="field is-narrow has-addons">
+                            <div class="control">
+                                <InputNumber @bind-Value="Pet.CenterLocation.Longitude" class="input" placeholder="Zemljopisna dužina" />
+                            </div>
+                            <div class="control">
+                                <a class="button is-static">°</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field is-horizontal ml-6">
+                    <div class="field-label is-normal">
+                        <label class="label">Širina</label>
+                    </div>
+                    <div class="field-body">
+                        <div class="field is-narrow has-addons">
+                            <div class="control">
+                                <InputNumber @bind-Value="Pet.CenterLocation.Latitude" class="input" placeholder="Zemljopisna širina" />
+                            </div>
+                            <div class="control">
+                                <a class="button is-static">°</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <div class="field is-horizontal ml-6">
+                <div class="field-label is-normal">
+                    <label class="label">Radius<span class="has-text-danger">*</span></label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow has-addons">
+                        <div class="control">
+                            <InputNumber @bind-Value="Pet.Radius" class="input" placeholder="Radius sigurne zone" />
+                            <ValidationMessage For="@(() => Pet.Radius)"></ValidationMessage>
+                        </div>
+                        <div class="control">
+                            <a class="button is-static">m</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="help">Polja označena s <span class="has-text-danger">*</span> su obavezna!</p>
+
+            <div class="columns is-centered mt-3 has-text-centered">
+
+                <div class="control pr-4 is-inline-block-mobile">
+                    <button type="submit" class="button is-success is-rounded" disabled="@(IsGpsSNValid is false || IsGpsSNValid is null && !IsPetEdit)">
+                        <span class="icon is-small">
+                            <i class="fas fa-check"></i>
+                        </span>
+                        <span>@(IsPetEdit is true ? "Spremi" : "Dodaj")</span>
+                    </button>
+                </div>
+
+                <div class="control pl-4 is-inline-block-mobile">
+                    <button type=@(IsPetEdit is true ? "button" : "reset") class="button is-danger is-rounded" @onclick="TogglePetModal">
+                        <span>Otkaži</span>
+                        <span class="icon is-small">
+                            <i class="fas fa-times"></i>
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+
+    <button class="modal-close is-large" @onclick="TogglePetModal" aria-label="close"></button>
+</div>
+
+@if (UserPets is not null)
+{
+    if (!UserPets.Any())
+    {
+        <div class="notification is-warning has-text-centered has-text-weight-semibold">
+            <span class="is-size-5">Nema dodanih ljubimaca.</span>
+        </div>
+    }
+    else
+    {
+        foreach (var userPet in UserPets)
+        {
+            <div class="box mx-auto w-50 is-fullwidth-mobile">
+                <table class="table">
+                    <tbody>
+                        <tr>
+                            <th width="40%">Ime</th>
+                            <td width="60%" class="has-text-centered w-75px">
+                                <div class="overflow-auto">
+                                    @userPet.Name
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th width="40%">Starost</th>
+                            <td width="60%" class="has-text-centered">@(userPet.Age is not null ? userPet.Age?.ToString("0.#") + " god." : PetsConstants.NoDataEntry)</td>
+                        </tr>
+                        <tr>
+                            <th width="40%">Vrsta</th>
+                            <td width="60%" class="has-text-centered">@(userPet.Kind is not null ? userPet.Kind.GetDisplayName() : PetsConstants.NoDataEntry)</td>
+                        </tr>
+                        @if (userPet.Breed is not null)
+                        {
+                            <tr>
+                                <th width="40%">Pasmina</th>
+                                <td width="60%" class="has-text-centered">@userPet.Breed</td>
+                            </tr>
+                        }
+                        <tr>
+                            <th width="40%">Spol</th>
+                            <td width="60%" class="has-text-centered">@(userPet.Gender is not null ? userPet.Gender.GetDisplayName() : PetsConstants.NoDataEntry)</td>
+                        </tr>
+                        <tr>
+                            <th width="40%">Težina</th>
+                            <td width="60%" class="has-text-centered">@(userPet.Weight is not null ? userPet.Weight?.ToString("0.##") + " kg" : PetsConstants.NoDataEntry)</td>
+                        </tr>
+                        <tr>
+                            <th width="40%">Steriliziran</th>
+                            @if (@userPet.Sterilized is null)
+                            {
+                                <td width="60%" class="has-text-centered">@PetsConstants.NoDataEntry</td>
+                            }
+                            else
+                            {
+                                <td width="60%" class="has-text-centered">@(userPet.Sterilized == true ? "Da" : "Ne")</td>
+                            }
+                        </tr>
+                        <tr>
+                            <th width="40%" class="is-vcentered">Zadnja lokacija</th>
+                            @if (@userPet.Location is null)
+                            {
+                                <td width="60%" class="has-text-centered">@PetsConstants.NoDataEntry</td>
+                            }
+                            else
+                            {
+                                <td width="60%" class="has-text-centered">
+                                    Lng: @userPet.Location.Longitude
+                                    <br />
+                                    Lat: @userPet.Location.Latitude
+                                </td>
+                            }
+                        </tr>
+                        <tr>
+                            <th width="40%" class="is-vcentered">Zadnja temperatura zraka:</th>
+                            @if (@userPet.AirInfoSensorData?.Data?.AirTemperature is null)
+                            {
+                                <td width="60%" class="has-text-centered">@PetsConstants.NoDataFound</td>
+                            }
+                            else
+                            {
+                                <td width="60%" class="has-text-centered">
+                                    @(userPet.AirInfoSensorData.Data.AirTemperature + "°C")
+                                </td>
+                            }
+                        </tr>
+                        <tr>
+                            <th width="40%" class="is-vcentered">Zadnja vlažnost zraka:</th>
+                            @if (@userPet.AirInfoSensorData?.Data?.AirHumidity is null)
+                            {
+                                <td width="60%" class="has-text-centered">@PetsConstants.NoDataFound</td>
+                            }
+                            else
+                            {
+                                <td width="60%" class="has-text-centered">
+                                    @(userPet.AirInfoSensorData.Data.AirHumidity + "%")
+                                </td>
+                            }
+                        </tr>
+                        <tr>
+                            <th width="40%" class="is-vcentered">Plamen detektiran u zadnja 24h:</th>
+                            @if (@userPet.FlameDetectionSensorData?.FlameDetectedInLast24h is null)
+                            {
+                                <td width="60%" class="has-text-centered">@PetsConstants.NoDataFound</td>
+                            }
+                            else
+                            {
+                                <td width="60%" class="has-text-centered">
+                                    @(userPet.FlameDetectionSensorData.FlameDetectedInLast24h is true ? "Da" : "Ne")
+                                </td>
+                            }
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="has-text-right mr-2">
+                    <a @onclick="() => EditPet(userPet)">
+                        <span class="icon">
+                            <i class="fa-solid fa-pen-to-square fa-xl"></i>
+                        </span>
+                    </a>
+                    <a class="delete is-medium mr-2" @onclick="() => { ToggleConfirmDeletePetModal(); Pet = userPet; }"></a>
+                </div>
+
+            </div>
+        }
+    }
+}
+else
+{
+    if (PetsLoaded is true)
+    {
+        <div class="notification is-danger has-text-centered is-size-4 has-text-weight-semibold has-text-black">
+            <i class="fa-solid fa-face-frown"></i>
+            <span>Neuspješno učitavanje ljubimaca.</span>
+        </div>
+    }
+    else if (PetsLoaded is false)
+    {
+        <h1 class="data-loading">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Učitavanje ljubimaca...</span>
+        </h1>
+    }
+}
+
+<div class="has-text-centered">
+    <button class="button is-primary my-4" @onclick="ToggleAddNewPetModal">Dodaj novog ljubimca</button>
+</div>
+
+<div class="modal @(IsConfirmDeleteModalActive is true ? "is-active" : "")">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+        <header class="modal-card-head has-background-danger">
+            <p class="modal-card-title has-text-white has-text-weight-semibold mb-0">Oprez! Brisanje ljubimca</p>
+            <button class="delete" aria-label="close" @onclick="ToggleConfirmDeletePetModal"></button>
+        </header>
+
+        <section class="modal-card-body has-text-weight-semibold">
+            Jeste li sigurni da želite izbrisati ljubimca @Pet.Name?
+        </section>
+
+        <footer class="modal-card-foot is-justify-content-center">
+            <button type="button" class="button is-success is-rounded mr-5" @onclick="() => DeletePet(Pet)">
+                <span class="icon is-small">
+                    <i class="fas fa-check"></i>
+                </span>
+                <span>Izbriši</span>
+            </button>
+            <button type="button" class="button is-danger is-rounded" @onclick="ToggleConfirmDeletePetModal">
+                <span>Otkaži</span>
+                <span class="icon is-small">
+                    <i class="fas fa-times"></i>
+                </span>
+            </button>
+        </footer>
+    </div>
+</div>

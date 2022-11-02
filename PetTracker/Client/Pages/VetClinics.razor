@@ -1,0 +1,81 @@
+﻿@page "/vet-clinics"
+
+<PageTitle>Veterinarske klinike</PageTitle>
+
+<h1 class="title has-text-centered">Veterinarske klinike</h1>
+
+@if (UserPets is null)
+{
+    if (PetsLoaded is true)
+    {
+        <div class="notification is-danger has-text-centered is-size-4 has-text-weight-semibold has-text-black">
+            <i class="fa-solid fa-face-frown"></i>
+            <span>Neuspješno učitavanje ljubimaca.</span>
+        </div>
+    }
+    else if (PetsLoaded is false)
+    {
+        <h1 class="data-loading">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Učitavanje ljubimaca...</span>
+        </h1>
+    }
+}
+else
+{
+    <div class="w-50 mx-auto is-fullwidth-mobile pt-5">
+        <div class="mt-3 has-text-weight-semibold">
+            <span>Pronađi najbliže veterinarske stanice od ljubimca:</span>
+        </div>
+        <div class="select is-link mb-2 w-50">
+            <select @onchange="GetClosestVetClinicsForPet" class="w-100 is-block">
+                <option value="" selected disabled hidden>--Odaberite ljubimca--</option>
+                @foreach (var pet in UserPets)
+                {
+                    if (pet.Location is not null)
+                    {
+                        <option value="@pet.Id">@pet.Name</option>
+                    }
+                }
+            </select>
+        </div>
+        @if (ClosestVetClinics is null)
+        {
+            if (VetClinicsLoaded == true)
+            {
+                <div class="notification is-danger has-text-centered is-size-4 has-text-weight-semibold has-text-black">
+                    <i class="fa-solid fa-face-frown"></i>
+                    <span>Neuspješno učitavanje lokacija veterinaskih stanica.</span>
+                </div>
+            }
+            else if (VetClinicsLoaded == false)
+            {
+                <h1 class="data-loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>Učitavanje lokacija veterinaskih stanica...</span>
+                </h1>
+            }
+        }
+        else if (ClosestVetClinics.Count == 0)
+        {
+            <div class="notification is-warning is-light has-text-centered is-size-4 has-text-weight-semibold has-text-black">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>Nije pronađena niti jedna veterinarska stanica u krugu 3 km.</span>
+            </div>
+        }
+        else
+        {
+            <div class="box w-100 clinics-list">
+                @foreach (var clinic in ClosestVetClinics)
+                {
+                <div class="box">
+                    <div><b>Ime:</b> @clinic.Name</div>
+                    <div><b>Adresa:</b> @clinic.Vicinity</div>
+                    <div><b>Trenutno otvoreno:</b> @(clinic.OpeningHours?.OpenNow == true ? "Da" : "Ne")</div>
+                    <div><b>Ocjena:</b> @clinic.Rating</div>
+                </div>
+                }
+            </div>
+        }
+    </div>
+}

@@ -1,0 +1,258 @@
+﻿@page "/admin-panel"
+@using Microsoft.AspNetCore.Authorization
+@using PetTracker.Client.Components
+@attribute [Authorize(Roles = "Administrator")]
+
+<PageTitle>Administracija</PageTitle>
+
+<div class="has-text-centered">
+    <h1 class="h1">Korisnici</h1>
+</div>
+<hr />
+
+@if (Users is not null)
+{
+    <div class="table-container has-background-warning-light">
+        <table class="table is-hoverable has-background-warning-light">
+            <thead>
+                <tr class="v-middle-align">
+                    <th class="v-middle-align">Id</th>
+                    <th class="v-middle-align">Korisničko ime</th>
+                    <th class="v-middle-align">Ime</th>
+                    <th class="v-middle-align">Prezime</th>
+                    <th class="v-middle-align">Email</th>
+                    <th class="v-middle-align">Ljubimci (ID)</th>
+                    <th class="v-middle-align">Akcije</th>
+                </tr>
+                <tr>
+                    <td>
+                        <input class="input" @oninput="(args => FilterUsers(args.Value?.ToString(), nameof(User.Id)))" placeholder="Filter..." />
+                    </td>
+                    <td>
+                        <input class="input" @oninput="(args => FilterUsers(args.Value?.ToString(), nameof(User.UserName)))" placeholder="Filter..." />
+                    </td>
+                    <td>
+                        <input class="input" @oninput="(args => FilterUsers(args.Value?.ToString(), nameof(User.FirstName)))" placeholder="Filter..." />
+                    </td>
+                    <td>
+                        <input class="input" @oninput="(args => FilterUsers(args.Value?.ToString(), nameof(User.LastName)))" placeholder="Filter..." />
+                    </td>
+                    <td>
+                        <input class="input" @oninput="(args => FilterUsers(args.Value?.ToString(), nameof(User.Email)))" placeholder="Filter..." />
+                    </td>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Users)
+                {
+                    <tr class="v-middle-align">
+                        <th class="v-middle-align">@user.Id</th>
+                        <td class="v-middle-align">@user.UserName</td>
+                        <td class="v-middle-align">@user.FirstName</td>
+                        <td class="v-middle-align">@user.LastName</td>
+                        <td class="v-middle-align">@user.Email</td>
+                        @if (user.Pets is not null)
+                        {
+                            <td class="v-middle-align">
+                                @foreach (var pet in user.Pets)
+                                {
+                                    if (user.Pets.IndexOf(pet) == user.Pets.Count - 1)
+                                    {
+                                        @pet.Id
+                                    }
+                                    else
+                                    {
+                                        <text>@pet.Id,&nbsp;</text>
+                                    }
+                                }
+                            </td>
+                        }
+                        <td class="v-middle-align">
+                            <div style="width: 70px;">
+                                <a>
+                                    <span class="icon">
+                                        <i class="fa-solid fa-pen-to-square fa-xl" @onclick="() => EditUser(user)"></i>
+                                    </span>
+                                </a>
+                                <a class="delete is-medium ml-2" @onclick="() => { ToggleConfirmDeleteUserModal(); User = user; }"></a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                Prikazano @CurrentPage-@(Users.Count < PageSize ? Users.Count : (PageSize * CurrentPage)) od ukupno @Users.Count korisnika
+            </tfoot>
+        </table>
+    </div>
+    <Pagination TotalPages="TotalPages" CurrentPage="CurrentPage" Spread="3" OnSelectedPage="SelectedPage" />
+}
+else
+{
+    if (UsersLoaded is true)
+    {
+        <div class="notification is-danger has-text-centered is-size-4 has-text-weight-semibold has-text-black">
+            <i class="fa-solid fa-face-frown"></i>
+            <span>Neuspješno učitavanje korisnika.</span>
+        </div>
+    }
+    else if (UsersLoaded is false)
+    {
+        <h1 class="data-loading">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Učitavanje korisnika...</span>
+        </h1>
+    }
+}
+
+<div class="modal animate__animated animate__zoomIn animate__faster is-rounded @(IsEditUserModalActive is true ? "is-active" : "")">
+    <div class="modal-background"></div>
+    <div class="modal-content">
+        <EditForm Model="@User" class="box" OnValidSubmit="@HandleValidSubmit">
+            <DataAnnotationsValidator />
+
+            <div class="field is-horizontal ml-6">
+                <div class="field-label is-normal">
+                    <label class="label">Korisničko ime</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow">
+                        <div class="control">
+                            <InputText @bind-Value="User.UserName" class="input" placeholder="Ime korisnika" disabled />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal ml-6">
+                <div class="field-label is-normal">
+                    <label class="label">Ime</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow">
+                        <div class="control">
+                            <InputText @bind-Value="User.FirstName" class="input" placeholder="Ime korisnika" />
+                            <ValidationMessage For="@(() => User.FirstName)"></ValidationMessage>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal ml-6">
+                <div class="field-label is-normal">
+                    <label class="label">Prezime</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow">
+                        <div class="control">
+                            <InputText @bind-Value="User.LastName" class="input" placeholder="Prezime korisnika" />
+                            <ValidationMessage For="@(() => User.LastName)"></ValidationMessage>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal ml-6">
+                <div class="field-label is-normal">
+                    <label class="label">Email</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow">
+                        <div class="control">
+                            <InputText @bind-Value="User.Email" class="input" placeholder="Email korisnika" />
+                            <ValidationMessage For="@(() => User.Email)"></ValidationMessage>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal ml-6">
+                <div class="field-label is-normal">
+                    <label class="label">Kontakt broj</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow">
+                        <div class="control">
+                            <InputText @bind-Value="User.PhoneNumber" class="input" placeholder="Kontakt broj korisnika" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal ml-6">
+                <label class="label">Ljubimci</label>
+            </div>
+            <div class="field-body">
+                <div class="field is-narrow mx-auto">
+                    <div class="box">
+                        @if (User.Pets is not null)
+                        {
+                            @foreach (var pet in User.Pets)
+                            {
+                                <div class="box">
+                                    <b>ID:</b> @pet.Id <br />
+                                    <b>Ime:</b> @pet.Name <br />
+                                    <b>GPS S/N:</b> @pet.GpsDevice.SerialNumber
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="columns is-centered mt-3 has-text-centered">
+
+                <div class="control pr-4 is-inline-block-mobile">
+                    <button type="submit" class="button is-success is-rounded">
+                        <span class="icon is-small">
+                            <i class="fas fa-check"></i>
+                        </span>
+                        <span>Spremi</span>
+                    </button>
+                </div>
+
+                <div class="control pl-4 is-inline-block-mobile">
+                    <button type="button" class="button is-danger is-rounded" @onclick="ToggleEditUserModal">
+                        <span>Otkaži</span>
+                        <span class="icon is-small">
+                            <i class="fas fa-times"></i>
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+
+    <button class="modal-close is-large" @onclick="ToggleEditUserModal" aria-label="close"></button>
+</div>
+
+<div class="modal @(IsConfirmDeleteModalActive is true ? "is-active" : "")">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+        <header class="modal-card-head has-background-danger">
+            <p class="modal-card-title has-text-white has-text-weight-semibold mb-0">Oprez! Brisanje korisnika</p>
+            <button class="delete" aria-label="close" @onclick="ToggleConfirmDeleteUserModal"></button>
+        </header>
+
+        <section class="modal-card-body has-text-weight-semibold">
+            Jeste li sigurni da želite izbrisati korisnika @User.UserName?
+        </section>
+
+        <footer class="modal-card-foot is-justify-content-center">
+            <button type="button" class="button is-success is-rounded mr-5" @onclick="() => DeleteUser(User)">
+                <span class="icon is-small">
+                    <i class="fas fa-check"></i>
+                </span>
+                <span>Izbriši</span>
+            </button>
+            <button type="button" class="button is-danger is-rounded" @onclick="ToggleConfirmDeleteUserModal">
+                <span>Otkaži</span>
+                <span class="icon is-small">
+                    <i class="fas fa-times"></i>
+                </span>
+            </button>
+        </footer>
+    </div>
+</div>

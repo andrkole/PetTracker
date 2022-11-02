@@ -1,0 +1,170 @@
+﻿@page "/pet-statistics"
+@using Microsoft.AspNetCore.Authorization
+@using PetTracker.Shared.Constants
+@using PetTracker.Shared.Extensions
+
+@attribute [Authorize]
+
+<PageTitle>Statistika</PageTitle>
+
+<h1 class="title has-text-centered">Statistika</h1>
+
+@if (UserPets is null)
+{
+	if (PetsLoaded)
+	{
+		<div class="notification is-danger has-text-centered is-size-4 has-text-weight-semibold has-text-black">
+			<i class="fa-solid fa-face-frown"></i>
+			<span>Neuspjelo učitavanje ljubimaca.</span>
+		</div>
+	}
+	else
+	{
+		<h1 class="data-loading">
+			<i class="fas fa-spinner fa-spin"></i>
+			<span>Učitavanje ljubimaca...</span>
+		</h1>
+	}
+}
+else
+{
+	<EditForm Model="@PetStatisticsRequest" class="box w-75 mx-auto is-fullwidth-mobile" OnValidSubmit="@HandleValidSubmit">
+		<DataAnnotationsValidator />
+
+		<div class="field">
+			<label class="label is-inline-block">Statistika od:</label>
+			<div class="control is-inline-block ml-1">
+				<InputDate Type="InputDateType.DateTimeLocal" @bind-Value="PetStatisticsRequest.From" />
+				<ValidationMessage For="@(() => PetStatisticsRequest.From)"></ValidationMessage>
+			</div>
+		</div>
+
+		<div hidden="@(!DateFromLaterThanTo)" class="mb-4">
+			<span class="has-text-danger">Datum od ne može biti noviji od datuma do.</span>
+		</div>
+
+		<div class="field is-inline-block is-block-mobile">
+			<label class="label is-inline-block is-block-mobile">Statistika do:</label>
+			<div class="control ml-2 is-inline-block is-block-mobile">
+				<InputDate Type="InputDateType.DateTimeLocal" @bind-Value="PetStatisticsRequest.To" />
+				<ValidationMessage For="@(() => PetStatisticsRequest.To)"></ValidationMessage>
+			</div>
+		</div>
+		<div class="is-inline-block is-block-mobile has-text-centered-mobile is-fullwidth-mobile">
+			<button type="button" class="button is-info has-text-weight-semibold is-small" @onclick="(() => PetStatisticsRequest.To = DateTime.Now.AddMinutes(-2).TrimSeconds())">
+				Do najnovijeg vremena
+			</button>
+		</div>
+
+		<div class="w-75 is-fullwidth-mobile">
+			<div class="mt-2 has-text-weight-semibold">
+				<label class="label">Statistika za ljubimca:</label>
+			</div>
+			<div class="select is-link mt-1 is-select-mobile mb-4">
+				<InputSelect @bind-Value="PetStatisticsRequest.PetId">
+					<option value="" selected disabled hidden>--Odaberite ljubimca--</option>
+					@foreach (var pet in UserPets)
+					{
+					<option value="@pet.Id">@pet.Name</option>
+					}
+			</InputSelect>
+		</div>
+	</div>
+
+	<div class="control pr-4 mt-3 has-text-centered-mobile">
+		<button type="submit" class="button is-success">
+			<span class="icon is-small">
+				<i class="fas fa-check"></i>
+			</span>
+			<span>Pretraži</span>
+		</button>
+	</div>
+</EditForm>
+}
+
+@if (PetStatistics is null)
+{
+	if (PetStatisticsLoaded is true)
+	{
+		<div class="notification is-danger has-text-centered is-size-4 has-text-weight-semibold has-text-black">
+			<i class="fa-solid fa-face-frown"></i>
+			<span>Neuspješno učitavanje statistike.</span>
+		</div>
+	}
+	else if (PetStatisticsLoaded is false)
+	{
+		<h1 class="data-loading">
+			<i class="fas fa-spinner fa-spin"></i>
+			<span>Učitavanje statistike ljubimca...</span>
+		</h1>
+	}
+}
+else
+{
+	<div class="box w-50 mx-auto is-fullwidth-mobile">
+		<h3 class="has-text-centered">
+			Statistika za ljubimca @PetStatistics.Pet?.Name
+			<br />
+			od @PetStatisticsRequest.From!.Value.ToString(SharedConstants.LocalDateFormat)
+			<br />
+			do @PetStatisticsRequest.To!.Value.ToString(SharedConstants.LocalDateFormat)
+		</h3>
+
+		<table class="table">
+			<tbody>
+				<tr>
+					<th width="40%">Prešao</th>
+					<td width="60%" class="has-text-centered is-vcentered w-75px">
+						<div class="overflow-auto">
+							@(PetStatistics.DistanceTravelled.HasValue ? PetStatistics.DistanceTravelled.Value.ToString("0.##") + "m" : "N/A")
+						</div>
+					</td>
+				</tr>
+				<tr>
+					<th width="40%">Prosječna temperatura u prostoriji</th>
+					<td width="60%" class="has-text-centered is-vcentered w-75px">
+						<div class="overflow-auto">
+							@(PetStatistics.AvgRoomAirTemperature.HasValue ? PetStatistics.AvgRoomAirTemperature.Value.ToString("0.##") + "°C" : "N/A")
+						</div>
+					</td>
+				</tr>
+				<tr>
+					<th width="40%">Prosječna vlažnost zraka u prostoriji</th>
+					<td width="60%" class="has-text-centered is-vcentered w-75px">
+						<div class="overflow-auto">
+							@(PetStatistics.AvgRoomAirHumidity.HasValue ? PetStatistics.AvgRoomAirHumidity.Value.ToString("0.##") + "%" : "N/A")
+						</div>
+					</td>
+				</tr>
+				<tr>
+					<th width="40%">Aktivno vrijeme</th>
+					<td width="60%" class="has-text-centered is-vcentered w-75px">
+						<div class="overflow-auto">
+							@(PetStatistics.ActiveTime.HasValue
+							?
+							PetStatistics.ActiveTime.Value.Hours + " sati, " +
+							PetStatistics.ActiveTime.Value.Minutes + " minuta, " +
+							PetStatistics.ActiveTime.Value.Seconds + " sekundi"
+							:
+							"N/A")
+						</div>
+					</td>
+				</tr>
+				<tr>
+					<th width="40%">Vrijeme mirovanja</th>
+					<td width="60%" class="has-text-centered is-vcentered w-75px">
+						<div class="overflow-auto">
+							@(PetStatistics.RestingTime.HasValue
+							?
+							PetStatistics.RestingTime.Value.Hours + " sati, " +
+							PetStatistics.RestingTime.Value.Minutes + " minuta, " +
+							PetStatistics.RestingTime.Value.Seconds + " sekundi"
+							:
+							"N/A")
+						</div>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+}

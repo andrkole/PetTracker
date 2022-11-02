@@ -1,0 +1,123 @@
+﻿@page "/"
+
+@using GoogleMapsComponents
+@using PetTracker.Shared.Constants
+
+<PageTitle>Naslovnica</PageTitle>
+
+<AuthorizeView>
+	<Authorized>
+		@if (UserPets is null)
+		{
+			if (PetsLoaded is true)
+			{
+				<div class="notification is-danger has-text-centered is-size-4 has-text-weight-semibold has-text-black">
+					<i class="fa-solid fa-face-frown"></i>
+					<span>Neuspješno učitavanje ljubimaca.</span>
+				</div>
+			}
+			else if (PetsLoaded is false)
+			{
+				<h1 class="data-loading">
+					<i class="fas fa-spinner fa-spin"></i>
+					<span>Učitavanje ljubimaca...</span>
+				</h1>
+			}
+		}
+		else if (!UserPets.Any())
+		{
+			<div class="notification is-warning is-light has-text-centered is-size-4 has-text-weight-semibold has-text-black">
+				<span>Nemate niti jednog dodanog ljubimca.</span>
+			</div>
+		}
+		else
+		{
+			<div class="container w-75 is-inline-block is-fullwidth-mobile is-pulled-left">
+				<div class="responsive-map w-100 pr-5">
+					@if (PetMarkers is null)
+					{
+						if (MarkersLoaded)
+						{
+							<div class="notification is-danger has-text-centered is-size-4 has-text-weight-semibold has-text-black">
+								<i class="fa-solid fa-face-frown"></i>
+								<span>Neuspješno učitavanje lokacija ljubimaca.</span>
+							</div>
+						}
+						else
+						{
+							<h1 class="data-loading">
+								<i class="fas fa-spinner fa-spin"></i>
+								<span>Učitavanje lokacija ljubimaca...</span>
+							</h1>
+						}
+					}
+					<div class="has-text-centered mb-5">
+						<h1>Moji ljubimci</h1>
+					</div>
+
+					<GoogleMap @ref="@petMap" Id="petMap" Options="@petMapOptions" Height="70%" OnAfterInit="CreatePetMarkers" />
+
+					@if (UserPets.Any(p => p.Location is not null))
+					{
+						<div>
+							<div class="mt-2 has-text-weight-semibold">
+								<span>Lociraj ljubimca:</span>
+							</div>
+							<div class="select is-link mt-1 is-select-mobile mb-4">
+								<select @onchange="SetMapCenter">
+									@foreach (var pet in UserPets)
+									{
+										if (pet.Location is not null)
+										{
+											<option value="@pet.Id">@pet.Name</option>
+										}
+									}
+								</select>
+							</div>
+						</div>
+					}
+				</div>
+			</div>
+			<div class="w-25 is-fullwidth-mobile is-inline-block pt6-mobile-0 pet-info-overview-list">
+				@foreach (var pet in UserPets)
+				{
+					<div class="pet-info-overview-block">
+						<span><b>@pet.Name</b></span>
+						<br />
+						<span><b>Zadnja sinkronizacija: </b>@(pet.LastSynchronization.HasValue ? pet.LastSynchronization.Value.ToLocalTime().ToString(SharedConstants.LocalDateFormat) : "N/A")</span>
+						<br />
+						<span><b>Senzori aktivni:</b> @((pet.LastSynchronization.HasValue && pet.LastSynchronization.Value > DateTime.UtcNow.AddMinutes(-3)) ? "Da" : "Ne")</span>
+
+						@if (pet.FlameDetectionSensorData?.Data?.FlameDetected is true)
+						{
+							<br />
+							<span class="has-text-danger"><b>Detektiran plamen pored ljubimca @pet.Name!</b></span>
+							<br />
+						}
+						@if (pet.Location?.LeftSafetyRadius is true)
+						{
+							<br />
+							<span class="has-text-danger"><b>Ljubimac @pet.Name je napustio sigurnu zonu!</b></span>
+							<br />
+						}
+					</div>
+					<hr class="hr-top-border" />
+				}
+			</div>
+		}
+	</Authorized>
+	<NotAuthorized>
+		<div class="notification has-text-centered has-text-weight-semibold mb-0">
+			<h2 class="is-centered">Dobrodošli na stranicu PetTracker.</h2>
+			PetTracker Vam omogućava praćenje ljubimaca u stvarnom vremenu kako biste uvijek bili sigurni da je Vaš ljubimac na sigurnom mjestu. <br \>
+			Također Vam omogućuje i praćenje kvalitete zraka prostorije i detektiranje plamena, kako bi bili sigurni da Vaš ljubimac boravi u dobrim uvjetima. <br \>
+			Uz sve navedeno, imati ćete i uvid u statistiku pojedinog ljubimca, poput pređene daljine za određeni vremenski period, kao i druge korisne informacije.
+		</div>
+
+		<img src="./images/dog_background.jpg" alt="Dog smiling picture" />
+
+		<div class="notification is-light-warning has-text-centered has-text-weight-semibold">
+			Za nastavak i korištenje aplikacije potrebna je prijava ili registracija.
+		</div>
+	</NotAuthorized>
+</AuthorizeView>
